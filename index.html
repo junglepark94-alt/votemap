@@ -372,12 +372,7 @@ function getDataForName(sigName) {
     // 없으면 이 이름이 시(市) 접두사인 경우 → 하위 구 데이터 합산 (e.g. 청주시 → 4구 합산)
     return aggregateByCity(currentRegion, 3, nm);
   } else if (currentEc === 4) {
-    // ec=4: 청주시/천안시 구 폴리곤 → 상위 시 키로 조회
-    let base = nm;
-    for (const city of ['청주시', '천안시']) {
-      if (nm.startsWith(city) && nm.length > city.length) { base = city; break; }
-    }
-    return chungData[`${r}__4__${base}`] || null;
+    return chungData[`${r}__4__${nm}`] || null;
   } else if (currentEc === 5 || currentEc === 6) {
     return getCouncilAggForGeo(currentRegion, currentEc, nm);
   }
