@@ -247,8 +247,9 @@ const GEOJSON_URLS = {
   chung: 'https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2013/json/skorea_municipalities_geo_simple.json',
 };
 
-// 충북/충남 구분: SIG_CD 앞 2자리
-const REGION_CODE = { chungbuk: '43', chungnam: '44' };
+// 충북/충남 구분: GeoJSON은 구 센서스 코드 체계 사용 (충북=33, 충남=34)
+// 현행 행정코드(충북=43, 충남=44)와 다름에 주의
+const REGION_CODE = { chungbuk: '33', chungnam: '34' };
 
 // ── 지도 초기화 ──────────────────────────────────────────────
 const map = L.map('map', { center: [37.5665, 126.978], zoom: 11, zoomControl: true });
@@ -266,6 +267,28 @@ function featureName(feature) {
   return p.name || p.SIG_KOR_NM || '';
 }
 
+// 여러 구의 데이터를 시 단위로 집계 (청주시 4구 → 청주시 합계)
+function aggregateByCity(region, ec, cityName) {
+  const r = region === 'chungbuk' ? '충북' : '충남';
+  const prefix = `${r}__${ec}__${cityName}`;
+  const matching = Object.entries(chungData).filter(([k]) => normName(k).startsWith(normName(prefix)));
+  if (matching.length === 0) return null;
+  if (matching.length === 1) return matching[0][1];
+  // 여러 항목 합산
+  const result = { voters: 0, votes: 0, candidates: [] };
+  const candMap = {};
+  matching.forEach(([, d]) => {
+    result.voters += d.voters;
+    result.votes  += d.votes;
+    d.candidates.forEach(c => {
+      if (!candMap[c.name]) candMap[c.name] = { ...c, votes: 0 };
+      candMap[c.name].votes += c.votes;
+    });
+  });
+  result.candidates = Object.values(candMap).sort((a, b) => b.votes - a.votes);
+  return result;
+}
+
 // 현재 선택된 지역/선거 기준으로 데이터 조회
 function getDataForName(sigName) {
   const nm = normName(sigName);
@@ -273,15 +296,20 @@ function getDataForName(sigName) {
     return seoulData[nm] || seoulData[sigName] || null;
   }
   const region = currentRegion === 'chungbuk' ? '충북' : '충남';
+  const r = region;
   if (currentEc === 3) {
-    return chungData[`${region}__3__${nm}`] || null;
+    // 정확히 일치하는 키 먼저 시도
+    const exact = chungData[`${r}__3__${nm}`];
+    if (exact) return exact;
+    // 없으면 이 이름이 시(市) 접두사인 경우 → 하위 구 데이터 합산 (e.g. 청주시 → 4구 합산)
+    return aggregateByCity(currentRegion, 3, nm);
   } else {
-    // ec=4: 청주시/천안시 등 구가 있는 경우 상위 시로 집약
+    // ec=4: 청주시/천안시 구 폴리곤 → 상위 시 키로 조회
     let base = nm;
     for (const city of ['청주시', '천안시']) {
       if (nm.startsWith(city) && nm.length > city.length) { base = city; break; }
     }
-    return chungData[`${region}__4__${base}`] || null;
+    return chungData[`${r}__4__${base}`] || null;
   }
 }
 
@@ -641,9 +669,10 @@ function loadAndRender() {
     let features = geojson.features;
 
     if (!isSeoul) {
-      const code = REGION_CODE[currentRegion];
+      const code = REGION_CODE[currentRegion]; // '33' or '34'
       features = features.filter(f => {
-        const cd = f.properties.SIG_CD || f.properties.sig_cd || '';
+        // southkorea-maps는 구 센서스 코드를 'code' 프로퍼티로 제공 (5자리 숫자)
+        const cd = String(f.properties.code || f.properties.SIG_CD || '');
         return cd.startsWith(code);
       });
     }
