@@ -174,39 +174,40 @@
 <script>
 // ── 선거 데이터 (선관위 공식 자료) ──────────────────────────
 const electionData = {
-  "종로구": {jeong:39395, oh:37071, voters:125290, votes:79673},
-  "중구":   {jeong:33296, oh:34466, voters:109510, votes:70278},
-  "용산구": {jeong:45696, oh:64860, voters:181207, votes:114665},
-  "성동구": {jeong:83051, oh:76519, voters:246899, votes:163478},
-  "광진구": {jeong:91733, oh:91817, voters:301915, votes:190817},
-  "동대문구":{jeong:100421,oh:94942, voters:317743, votes:203138},
-  "중랑구": {jeong:110293,oh:91620, voters:342996, votes:209803},
-  "성북구": {jeong:123800,oh:106852,voters:376276, votes:240296},
-  "강북구": {jeong:81935, oh:65057, voters:256006, votes:153014},
-  "도봉구": {jeong:89222, oh:77951, voters:271153, votes:172948},
-  "노원구": {jeong:142400,oh:125832,voters:426497, votes:278986},
-  "은평구": {jeong:137844,oh:106551,voters:408635, votes:254952},
-  "서대문구":{jeong:88095, oh:79473, voters:270323, votes:175291},
-  "마포구": {jeong:101820,oh:96217, voters:320072, votes:207302},
-  "양천구": {jeong:115578,oh:117348,voters:364357, votes:241699},
-  "강서구": {jeong:156571,oh:136984,voters:492152, votes:303832},
-  "구로구": {jeong:112376,oh:97723, voters:349214, votes:218614},
-  "금천구": {jeong:64801, oh:52764, voters:209157, votes:124503},
-  "영등포구":{jeong:100132,oh:108322,voters:340654, votes:217199},
-  "동작구": {jeong:102824,oh:107902,voters:337561, votes:218965},
-  "관악구": {jeong:134851,oh:115522,voters:450187, votes:258882},
-  "서초구": {jeong:76979, oh:150007,voters:352303, votes:235076},
-  "강남구": {jeong:93336, oh:192934,voters:470870, votes:296756},
-  "송파구": {jeong:156544,oh:204056,voters:565368, votes:372284},
-  "강동구": {jeong:132567,oh:143029,voters:432789, votes:283702},
+  "종로구": {jeong:39395, oh:37071, kim:624,  yoo:668,  kwon:1073, voters:125290, votes:79673},
+  "중구":   {jeong:33296, oh:34466, kim:590,  yoo:496,  kwon:633,  voters:109510, votes:70278},
+  "용산구": {jeong:45696, oh:64860, kim:808,  yoo:986,  kwon:1248, voters:181207, votes:114665},
+  "성동구": {jeong:83051, oh:76519, kim:988,  yoo:776,  kwon:831,  voters:246899, votes:163478},
+  "광진구": {jeong:91733, oh:91817, kim:1497, yoo:1766, kwon:1775, voters:301915, votes:190817},
+  "동대문구":{jeong:100421,oh:94942, kim:1659, yoo:1732, kwon:1996, voters:317743, votes:203138},
+  "중랑구": {jeong:110293,oh:91620, kim:1535, yoo:1652, kwon:1962, voters:342996, votes:209803},
+  "성북구": {jeong:123800,oh:106852,kim:1765, yoo:2421, kwon:3007, voters:376276, votes:240296},
+  "강북구": {jeong:81935, oh:65057, kim:948,  yoo:1370, kwon:1619, voters:256006, votes:153014},
+  "도봉구": {jeong:89222, oh:77951, kim:1026, yoo:1225, kwon:1543, voters:271153, votes:172948},
+  "노원구": {jeong:142400,oh:125832,kim:2177, yoo:2444, kwon:2969, voters:426497, votes:278986},
+  "은평구": {jeong:137844,oh:106551,kim:1894, yoo:2298, kwon:3417, voters:408635, votes:254952},
+  "서대문구":{jeong:88095, oh:79473, kim:1400, yoo:1949, kwon:2476, voters:270323, votes:175291},
+  "마포구": {jeong:101820,oh:96217, kim:1706, yoo:2252, kwon:3219, voters:320072, votes:207302},
+  "양천구": {jeong:115578,oh:117348,kim:1634, yoo:1730, kwon:2102, voters:364357, votes:240716},
+  "강서구": {jeong:156571,oh:136984,kim:2492, yoo:2643, kwon:3332, voters:492152, votes:305352},
+  "구로구": {jeong:112376,oh:97723, kim:1779, yoo:1811, kwon:2515, voters:349214, votes:218985},
+  "금천구": {jeong:64801, oh:52764, kim:1100, yoo:1094, kwon:1316, voters:209157, votes:122874},
+  "영등포구":{jeong:100132,oh:108322,kim:1924, yoo:1837, kwon:2282, voters:340654, votes:216799},
+  "동작구": {jeong:102824,oh:107902,kim:2658, yoo:1946, kwon:2370, voters:337561, votes:220225},
+  "관악구": {jeong:134851,oh:115522,kim:3480, yoo:3136, kwon:3900, voters:450187, votes:264549},
+  "서초구": {jeong:76979, oh:150007,kim:1798, yoo:1445, kwon:1691, voters:352303, votes:233564},
+  "강남구": {jeong:93336, oh:192934,kim:2422, yoo:1818, kwon:1880, voters:470870, votes:294560},
+  "송파구": {jeong:156544,oh:204056,kim:2912, yoo:2577, kwon:2799, voters:565368, votes:372231},
+  "강동구": {jeong:132567,oh:143029,kim:2505, yoo:1895, kwon:2360, voters:432789, votes:284887},
 };
 
-// 후보 추가 데이터 (개혁신당 김정철, 여성의당 유지혜, 정의당 권영국)
-// 전체 대비 계산용 — 나머지 득표는 기타로 처리
 Object.keys(electionData).forEach(k => {
   const d = electionData[k];
   d.jeongPct = (d.jeong / d.votes * 100).toFixed(2);
   d.ohPct    = (d.oh   / d.votes * 100).toFixed(2);
+  d.kimPct   = (d.kim  / d.votes * 100).toFixed(2);
+  d.yooPct   = (d.yoo  / d.votes * 100).toFixed(2);
+  d.kwonPct  = (d.kwon / d.votes * 100).toFixed(2);
   d.turnout  = (d.votes / d.voters * 100).toFixed(1);
   d.winner   = d.oh > d.jeong ? 'ppp' : 'dp';
   d.gap      = Math.abs(d.oh - d.jeong);
@@ -295,12 +296,12 @@ function showDetailPanel(name) {
     `${name} <span class="winner-badge ${isPpp?'winner-ppp':'winner-dp'}">${isPpp?'국민의힘':'민주당'} 승</span>`;
 
   const candidates = [
-    {name:'오세훈 (국민의힘)', votes:d.oh, pct:parseFloat(d.ohPct), color:'#ff4444'},
+    {name:'오세훈 (국민의힘)',      votes:d.oh,   pct:parseFloat(d.ohPct),   color:'#ff4444'},
     {name:'정원오 (더불어민주당)', votes:d.jeong, pct:parseFloat(d.jeongPct), color:'#2979ff'},
-  ];
-  const others = d.votes - d.oh - d.jeong;
-  const otherPct = (others / d.votes * 100).toFixed(2);
-  candidates.push({name:'기타 후보', votes:others, pct:parseFloat(otherPct), color:'#666'});
+    {name:'김정철 (개혁신당)',      votes:d.kim,  pct:parseFloat(d.kimPct),  color:'#ff9800'},
+    {name:'권영국 (정의당)',        votes:d.kwon, pct:parseFloat(d.kwonPct), color:'#ffeb3b'},
+    {name:'유지혜 (여성의당)',      votes:d.yoo,  pct:parseFloat(d.yooPct),  color:'#e040fb'},
+  ].sort((a, b) => b.votes - a.votes);
 
   const maxPct = Math.max(...candidates.map(c=>c.pct));
   let html = candidates.map(c => `
