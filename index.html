@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제9회 전국동시지방선거 서울시장 개표 결과</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; background: #0f1117; color: #e0e0e0; }
+
+  header {
+    padding: 14px 32px;
+    background: #1a1d26;
+    border-bottom: 1px solid #2a2d3a;
+    display: flex; align-items: center; gap: 16px;
+  }
+  header h1 { font-size: 1.15rem; font-weight: 700; color: #fff; white-space: nowrap; }
+  header .subtitle { font-size: 0.78rem; color: #888; margin-top: 2px; white-space: nowrap; }
+  .badge {
+    padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+  }
+  .badge-ppp { background: #ff4444; color: #fff; }
+  .badge-dp { background: #2979ff; color: #fff; }
+
+  .summary-bar {
+    display: flex; background: #1a1d26; border-bottom: 1px solid #2a2d3a;
+    padding: 10px 24px; align-items: center; gap: 20px; flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .summary-item { text-align: center; white-space: nowrap; flex-shrink: 0; }
+  .summary-item .label { font-size: 0.65rem; color: #888; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .summary-item .value { font-size: 0.88rem; font-weight: 700; white-space: nowrap; }
+  .ppp-color { color: #ff6b6b; }
+  .dp-color { color: #5b8fff; }
+  .divider { width: 1px; height: 30px; background: #2a2d3a; flex-shrink: 0; }
+
+  .vote-bar-wrap { flex: 1; min-width: 120px; }
+  .vote-bar-labels { display: flex; justify-content: space-between; font-size: 0.65rem; color: #888; margin-bottom: 3px; }
+  .vote-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; background: #2a2d3a; }
+  .vote-bar .dp-seg { background: #2979ff; }
+  .vote-bar .ppp-seg { background: #ff4444; }
+
+  .main { display: flex; height: calc(100vh - 115px); }
+  #map { flex: 1; }
+  .sidebar {
+    width: 340px; background: #1a1d26; border-left: 1px solid #2a2d3a;
+    overflow-y: auto; display: flex; flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 16px 20px; font-size: 0.85rem; color: #888;
+    border-bottom: 1px solid #2a2d3a; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .district-list { padding: 8px 0; }
+  .district-item {
+    display: flex; align-items: center; padding: 10px 20px; cursor: pointer;
+    border-bottom: 1px solid #1e2030; transition: background 0.15s;
+  }
+  .district-item:hover, .district-item.active { background: #252836; }
+  .district-rank { width: 22px; font-size: 0.7rem; color: #555; }
+  .district-color-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+  .district-name { flex: 1; font-size: 0.88rem; }
+  .district-gap {
+    font-size: 0.78rem; font-weight: 600;
+    padding: 2px 7px; border-radius: 8px;
+  }
+  .district-gap.ppp { background: rgba(255,68,68,0.15); color: #ff6b6b; }
+  .district-gap.dp { background: rgba(41,121,255,0.15); color: #5b8fff; }
+
+  /* Detail panel */
+  .detail-panel {
+    display: none; position: fixed; right: 340px; bottom: 24px;
+    width: 300px; background: #1e2230; border: 1px solid #2a2d3a;
+    border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 1000; padding: 20px;
+  }
+  .detail-panel.show { display: block; }
+  .detail-panel .dp-title {
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: #fff;
+  }
+  .detail-panel .dp-close {
+    float: right; cursor: pointer; color: #666; font-size: 1.2rem; line-height: 1;
+  }
+  .detail-panel .dp-close:hover { color: #fff; }
+  .cand-row { display: flex; align-items: center; margin-bottom: 10px; }
+  .cand-row .cand-name { width: 110px; font-size: 0.82rem; }
+  .cand-row .cand-bar-wrap { flex: 1; margin: 0 8px; }
+  .cand-row .cand-bar { height: 7px; border-radius: 3px; }
+  .cand-row .cand-pct { width: 46px; text-align: right; font-size: 0.82rem; font-weight: 600; }
+  .cand-row .cand-votes { font-size: 0.72rem; color: #888; margin-top: 2px; }
+  .detail-extra { margin-top: 12px; padding-top: 12px; border-top: 1px solid #2a2d3a; font-size: 0.78rem; color: #888; }
+  .detail-extra span { color: #ccc; }
+  .winner-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 8px;
+    font-size: 0.68rem; font-weight: 700; margin-left: 6px; vertical-align: middle;
+  }
+  .winner-ppp { background: #ff4444; color: #fff; }
+  .winner-dp { background: #2979ff; color: #fff; }
+
+  /* Tooltip */
+  .map-tooltip {
+    background: rgba(15,17,23,0.95); border: 1px solid #2a2d3a; border-radius: 8px;
+    padding: 10px 14px; font-size: 0.82rem; color: #e0e0e0; pointer-events: none;
+    min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .map-tooltip .tt-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; color: #fff; }
+  .map-tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 3px; }
+  .map-tooltip .tt-cand { font-size: 0.78rem; }
+  .map-tooltip .tt-pct { font-weight: 700; font-size: 0.82rem; }
+  .tt-winner { font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>제9회 전국동시지방선거 · 서울특별시장 개표 결과</h1>
+    <div class="subtitle">2026년 6월 3일 실시 · 25개 자치구별 최종 개표 결과 (중앙선거관리위원회)</div>
+  </div>
+</header>
+
+<div class="summary-bar">
+  <div class="summary-item">
+    <div class="label">당선인</div>
+    <div class="value ppp-color">오세훈 당선</div>
+  </div>
+  <div class="divider"></div>
+  <div class="summary-item">
+    <div class="label">🔴 오세훈 (국민의힘)</div>
+    <div class="value ppp-color">49.22% · 257만표</div>
+  </div>
+  <div class="summary-item">
+    <div class="label">🔵 정원오 (더불어민주당)</div>
+    <div class="value dp-color">48.07% · 251만표</div>
+  </div>
+  <div class="divider"></div>
+  <div class="summary-item vote-bar-wrap">
+    <div class="vote-bar-labels">
+      <span class="dp-color">민주 48.07%</span>
+      <span class="ppp-color">국힘 49.22%</span>
+    </div>
+    <div class="vote-bar">
+      <div class="dp-seg" style="width:49.4%"></div>
+      <div class="ppp-seg" style="width:50.6%"></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="summary-item">
+    <div class="label">표차</div>
+    <div class="value" style="color:#ffc107">6만표 차 (1.15%p)</div>
+  </div>
+  <div class="summary-item">
+    <div class="label">우세 구</div>
+    <div class="value"><span class="ppp-color">국힘 10구</span> · <span class="dp-color">민주 15구</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <div id="map"></div>
+  <div class="sidebar">
+    <div class="sidebar-header">구별 결과 목록</div>
+    <div class="district-list" id="districtList"></div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <span class="dp-close" id="detailClose">✕</span>
+  <div class="dp-title" id="detailTitle"></div>
+  <div id="detailContent"></div>
+  <div class="detail-extra" id="detailExtra"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── 선거 데이터 (선관위 공식 자료) ──────────────────────────
+const electionData = {
+  "종로구": {jeong:39395, oh:37071, voters:125290, votes:79673},
+  "중구":   {jeong:33296, oh:34466, voters:109510, votes:70278},
+  "용산구": {jeong:45696, oh:64860, voters:181207, votes:114665},
+  "성동구": {jeong:83051, oh:76519, voters:246899, votes:163478},
+  "광진구": {jeong:91733, oh:91817, voters:301915, votes:190817},
+  "동대문구":{jeong:100421,oh:94942, voters:317743, votes:203138},
+  "중랑구": {jeong:110293,oh:91620, voters:342996, votes:209803},
+  "성북구": {jeong:123800,oh:106852,voters:376276, votes:240296},
+  "강북구": {jeong:81935, oh:65057, voters:256006, votes:153014},
+  "도봉구": {jeong:89222, oh:77951, voters:271153, votes:172948},
+  "노원구": {jeong:142400,oh:125832,voters:426497, votes:278986},
+  "은평구": {jeong:137844,oh:106551,voters:408635, votes:254952},
+  "서대문구":{jeong:88095, oh:79473, voters:270323, votes:175291},
+  "마포구": {jeong:101820,oh:96217, voters:320072, votes:207302},
+  "양천구": {jeong:115578,oh:117348,voters:364357, votes:241699},
+  "강서구": {jeong:156571,oh:136984,voters:492152, votes:303832},
+  "구로구": {jeong:112376,oh:97723, voters:349214, votes:218614},
+  "금천구": {jeong:64801, oh:52764, voters:209157, votes:124503},
+  "영등포구":{jeong:100132,oh:108322,voters:340654, votes:217199},
+  "동작구": {jeong:102824,oh:107902,voters:337561, votes:218965},
+  "관악구": {jeong:134851,oh:115522,voters:450187, votes:258882},
+  "서초구": {jeong:76979, oh:150007,voters:352303, votes:235076},
+  "강남구": {jeong:93336, oh:192934,voters:470870, votes:296756},
+  "송파구": {jeong:156544,oh:204056,voters:565368, votes:372284},
+  "강동구": {jeong:132567,oh:143029,voters:432789, votes:283702},
+};
+
+// 후보 추가 데이터 (개혁신당 김정철, 여성의당 유지혜, 정의당 권영국)
+// 전체 대비 계산용 — 나머지 득표는 기타로 처리
+Object.keys(electionData).forEach(k => {
+  const d = electionData[k];
+  d.jeongPct = (d.jeong / d.votes * 100).toFixed(2);
+  d.ohPct    = (d.oh   / d.votes * 100).toFixed(2);
+  d.turnout  = (d.votes / d.voters * 100).toFixed(1);
+  d.winner   = d.oh > d.jeong ? 'ppp' : 'dp';
+  d.gap      = Math.abs(d.oh - d.jeong);
+  d.gapPct   = Math.abs(parseFloat(d.ohPct) - parseFloat(d.jeongPct)).toFixed(2);
+});
+
+// ── 지도 초기화 ──────────────────────────────────────────────
+const map = L.map('map', {
+  center: [37.5665, 126.978],
+  zoom: 11,
+  zoomControl: true,
+  attributionControl: true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors, © CARTO',
+  maxZoom: 18
+}).addTo(map);
+
+// ── 서울시 GeoJSON 로드 ───────────────────────────────────────
+const GEOJSON_URL = 'https://raw.githubusercontent.com/southkorea/seoul-maps/master/kostat/2013/json/seoul_municipalities_geo_simple.json';
+
+let geojsonLayer;
+let selectedLayer = null;
+
+function districtName(feature) {
+  // GeoJSON 속성에서 구 이름 추출
+  return feature.properties.name || feature.properties.SIG_KOR_NM || '';
+}
+
+function getStyle(feature, highlight=false) {
+  const name = districtName(feature);
+  const d = electionData[name];
+  if (!d) return {fillColor:'#333', color:'#555', weight:1, fillOpacity:0.6};
+  const isPpp = d.winner === 'ppp';
+  const intensity = Math.min(d.gapPct / 25, 1); // 최대 25%p → 최대 채도
+  const fillColor = isPpp
+    ? `rgba(255,${Math.round(80 - intensity*60)},${Math.round(80 - intensity*60)},0.85)`
+    : `rgba(${Math.round(80 - intensity*60)},${Math.round(130 - intensity*50)},255,0.85)`;
+  return {
+    fillColor,
+    color: highlight ? '#fff' : 'rgba(255,255,255,0.3)',
+    weight: highlight ? 2.5 : 1,
+    fillOpacity: highlight ? 0.95 : 0.82,
+  };
+}
+
+function fmt(n) { return n.toLocaleString('ko-KR'); }
+
+function showTooltip(layer, feature) {
+  const name = districtName(feature);
+  const d = electionData[name];
+  if (!d) return;
+  const isPpp = d.winner === 'ppp';
+  const winnerName = isPpp ? '오세훈' : '정원오';
+  const winnerParty = isPpp ? '국민의힘' : '민주당';
+  const winnerColor = isPpp ? '#ff6b6b' : '#5b8fff';
+  const loserColor  = isPpp ? '#5b8fff' : '#ff6b6b';
+  const loserName   = isPpp ? '정원오' : '오세훈';
+  const winnerPct   = isPpp ? d.ohPct : d.jeongPct;
+  const loserPct    = isPpp ? d.jeongPct : d.ohPct;
+
+  layer.bindTooltip(`
+    <div class="map-tooltip">
+      <div class="tt-name">${name}
+        <span class="tt-winner" style="background:${winnerColor};color:#fff">${winnerParty} 우세</span>
+      </div>
+      <div class="tt-row">
+        <span class="tt-cand" style="color:${winnerColor}">▲ ${winnerName}</span>
+        <span class="tt-pct" style="color:${winnerColor}">${winnerPct}%</span>
+      </div>
+      <div class="tt-row">
+        <span class="tt-cand" style="color:${loserColor}">▼ ${loserName}</span>
+        <span class="tt-pct" style="color:${loserColor}">${loserPct}%</span>
+      </div>
+    </div>
+  `, {sticky:true, className:'', opacity:1});
+}
+
+function showDetailPanel(name) {
+  const d = electionData[name];
+  if (!d) return;
+  const isPpp = d.winner === 'ppp';
+
+  document.getElementById('detailTitle').innerHTML =
+    `${name} <span class="winner-badge ${isPpp?'winner-ppp':'winner-dp'}">${isPpp?'국민의힘':'민주당'} 승</span>`;
+
+  const candidates = [
+    {name:'오세훈 (국민의힘)', votes:d.oh, pct:parseFloat(d.ohPct), color:'#ff4444'},
+    {name:'정원오 (더불어민주당)', votes:d.jeong, pct:parseFloat(d.jeongPct), color:'#2979ff'},
+  ];
+  const others = d.votes - d.oh - d.jeong;
+  const otherPct = (others / d.votes * 100).toFixed(2);
+  candidates.push({name:'기타 후보', votes:others, pct:parseFloat(otherPct), color:'#666'});
+
+  const maxPct = Math.max(...candidates.map(c=>c.pct));
+  let html = candidates.map(c => `
+    <div class="cand-row">
+      <div class="cand-name" style="color:${c.color}">${c.name}</div>
+      <div class="cand-bar-wrap">
+        <div class="cand-bar" style="width:${(c.pct/maxPct*100).toFixed(1)}%;background:${c.color};opacity:0.85"></div>
+        <div class="cand-votes">${fmt(c.votes)}표</div>
+      </div>
+      <div class="cand-pct" style="color:${c.color}">${c.pct.toFixed(2)}%</div>
+    </div>
+  `).join('');
+
+  document.getElementById('detailContent').innerHTML = html;
+  document.getElementById('detailExtra').innerHTML =
+    `유권자: <span>${fmt(d.voters)}명</span> &nbsp;·&nbsp; 투표자: <span>${fmt(d.votes)}명</span> &nbsp;·&nbsp; 투표율: <span>${d.turnout}%</span><br>
+     표차: <span>${fmt(d.gap)}표</span> (<span>${d.gapPct}%p</span>)`;
+
+  document.getElementById('detailPanel').classList.add('show');
+}
+
+fetch(GEOJSON_URL)
+  .then(r => r.json())
+  .then(geojson => {
+    geojsonLayer = L.geoJSON(geojson, {
+      style: feature => getStyle(feature),
+      onEachFeature: (feature, layer) => {
+        const name = districtName(feature);
+        showTooltip(layer, feature);
+
+        layer.on({
+          mouseover(e) {
+            e.target.setStyle(getStyle(feature, true));
+            e.target.bringToFront();
+          },
+          mouseout(e) {
+            if (selectedLayer !== e.target) {
+              e.target.setStyle(getStyle(feature, false));
+            }
+          },
+          click(e) {
+            if (selectedLayer && selectedLayer !== e.target) {
+              const prev = selectedLayer;
+              const prevFeat = prev.feature;
+              prev.setStyle(getStyle(prevFeat, false));
+            }
+            selectedLayer = e.target;
+            e.target.setStyle(getStyle(feature, true));
+            showDetailPanel(name);
+            // 사이드바 하이라이트
+            document.querySelectorAll('.district-item').forEach(el => {
+              el.classList.toggle('active', el.dataset.name === name);
+            });
+          }
+        });
+      }
+    }).addTo(map);
+
+    buildSidebar();
+  })
+  .catch(err => {
+    console.error('GeoJSON 로드 실패:', err);
+    document.getElementById('map').innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;font-size:1rem">지도 데이터 로드 중 오류 발생. 인터넷 연결을 확인해주세요.</div>';
+  });
+
+// ── 사이드바 구성 ─────────────────────────────────────────────
+function buildSidebar() {
+  const sorted = Object.entries(electionData)
+    .sort((a,b) => b[1].gapPct - a[1].gapPct);
+
+  // PPP 먼저, 그다음 DP (격차 순)
+  const ppp = sorted.filter(([,d]) => d.winner==='ppp');
+  const dp  = sorted.filter(([,d]) => d.winner==='dp');
+  const all = [...ppp, ...dp];
+
+  const container = document.getElementById('districtList');
+  container.innerHTML = '';
+
+  all.forEach(([name, d], i) => {
+    const isPpp = d.winner === 'ppp';
+    const color = isPpp ? '#ff4444' : '#2979ff';
+    const winnerName = isPpp ? `오세훈 ${d.ohPct}%` : `정원오 ${d.jeongPct}%`;
+
+    const div = document.createElement('div');
+    div.className = 'district-item';
+    div.dataset.name = name;
+    div.innerHTML = `
+      <div class="district-rank">${i+1}</div>
+      <div class="district-color-dot" style="background:${color}"></div>
+      <div class="district-name">
+        <div style="font-weight:600">${name}</div>
+        <div style="font-size:0.72rem;color:#666;margin-top:1px">${winnerName} · 격차 ${d.gapPct}%p</div>
+      </div>
+      <div class="district-gap ${isPpp?'ppp':'dp'}">+${d.gapPct}%p</div>
+    `;
+    div.addEventListener('click', () => {
+      showDetailPanel(name);
+      document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
+      div.classList.add('active');
+      // 지도에서 해당 구 찾아 포커스
+      if (geojsonLayer) {
+        geojsonLayer.eachLayer(layer => {
+          const feat = layer.feature;
+          const n = districtName(feat);
+          if (n === name) {
+            map.fitBounds(layer.getBounds(), {padding:[20,20]});
+            if (selectedLayer && selectedLayer !== layer) {
+              selectedLayer.setStyle(getStyle(selectedLayer.feature, false));
+            }
+            selectedLayer = layer;
+            layer.setStyle(getStyle(feat, true));
+          }
+        });
+      }
+    });
+    container.appendChild(div);
+  });
+}
+
+document.getElementById('detailClose').addEventListener('click', () => {
+  document.getElementById('detailPanel').classList.remove('show');
+  if (selectedLayer) {
+    selectedLayer.setStyle(getStyle(selectedLayer.feature, false));
+    selectedLayer = null;
+  }
+  document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
+});
+</script>
+</body>
+</html>
