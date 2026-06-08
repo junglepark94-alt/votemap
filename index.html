@@ -165,6 +165,8 @@
   <span class="ec-label">선거 종류</span>
   <div class="ec-tab active" data-ec="3">시도지사선거</div>
   <div class="ec-tab" data-ec="4">구시군장선거</div>
+  <div class="ec-tab" data-ec="5">시도의회의원</div>
+  <div class="ec-tab" data-ec="6">구시군의회의원</div>
 </div>
 
 <div class="summary-bar" id="summaryBar"></div>
@@ -234,9 +236,75 @@ Object.entries(seoulRaw).forEach(([name, d]) => {
 // ── 충청 선거 데이터 (chungData.json 인라인) ─────────────────
 const chungData = {"충북__3__청주시상당구":{"voters":165308,"votes":97087,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":53912},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":41814}]},"충북__3__청주시서원구":{"voters":163902,"votes":95616,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":52743},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":41270}]},"충북__3__청주시흥덕구":{"voters":247085,"votes":136031,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":76694},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":57449}]},"충북__3__청주시청원구":{"voters":158304,"votes":88377,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":50612},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":36354}]},"충북__3__충주시":{"voters":181990,"votes":108083,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":55913},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":50092}]},"충북__3__제천시":{"voters":114367,"votes":72600,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":36966},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":34238}]},"충북__3__단양군":{"voters":24770,"votes":17592,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":7611},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":9538}]},"충북__3__영동군":{"voters":39676,"votes":28083,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":12929},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":14162}]},"충북__3__보은군":{"voters":28393,"votes":21463,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":10106},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":10687}]},"충북__3__옥천군":{"voters":46070,"votes":31804,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":15902},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":14994}]},"충북__3__음성군":{"voters":86130,"votes":49540,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":26840},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":21631}]},"충북__3__진천군":{"voters":73635,"votes":41293,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":23762},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":16773}]},"충북__3__괴산군":{"voters":35075,"votes":26190,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":11678},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":13670}]},"충북__3__증평군":{"voters":31883,"votes":18962,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"신용한","votes":10200},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김영환","votes":8395}]},"충남__3__천안시서북구":{"voters":301234,"votes":162238,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":91226},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":69238}]},"충남__3__천안시동남구":{"voters":269296,"votes":139539,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":72833},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":65001}]},"충남__3__공주시":{"voters":90788,"votes":60029,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":31370},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":27577}]},"충남__3__보령시":{"voters":82118,"votes":54328,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":23986},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":29259}]},"충남__3__아산시":{"voters":302051,"votes":163696,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":91377},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":70162}]},"충남__3__서산시":{"voters":148383,"votes":88823,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":45692},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":41397}]},"충남__3__태안군":{"voters":54405,"votes":36312,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":16439},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":18758}]},"충남__3__금산군":{"voters":44440,"votes":30277,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":14976},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":14427}]},"충남__3__논산시":{"voters":95176,"votes":60223,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":30591},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":28239}]},"충남__3__계룡시":{"voters":37968,"votes":24836,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":12811},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":11655}]},"충남__3__당진시":{"voters":147876,"votes":83851,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":44763},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":37652}]},"충남__3__부여군":{"voters":53402,"votes":37541,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":18444},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":18063}]},"충남__3__서천군":{"voters":43308,"votes":29572,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":14228},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":14522}]},"충남__3__홍성군":{"voters":87823,"votes":55004,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":26708},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":27303}]},"충남__3__청양군":{"voters":27925,"votes":20793,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":10183},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":10038}]},"충남__3__예산군":{"voters":71046,"votes":44738,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"박수현","votes":17880},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김태흠","votes":25876}]},"충북__4__청주시":{"voters":165308,"votes":97079,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"이장섭","votes":49455},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"이범석","votes":44361},{"colIndex":6,"party":"ind","partyName":"무소속","name":"한현구","votes":1802}]},"충북__4__충주시":{"voters":181990,"votes":108077,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"맹정섭","votes":52838},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"이동석","votes":52962}]},"충북__4__제천시":{"voters":114367,"votes":72600,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"이상천","votes":36809},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김창규","votes":31971},{"colIndex":6,"party":"ind","partyName":"무소속","name":"송수연","votes":2649}]},"충북__4__단양군":{"voters":24770,"votes":17592,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"김광직","votes":6401},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김문근","votes":10812}]},"충북__4__영동군":{"voters":39676,"votes":28084,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"이수동","votes":11927},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"정영철","votes":15478}]},"충북__4__보은군":{"voters":28393,"votes":21461,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"하유정","votes":8363},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"최재형","votes":12504}]},"충북__4__옥천군":{"voters":46070,"votes":31802,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"황규철","votes":17762},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"전상인","votes":13361}]},"충북__4__음성군":{"voters":86130,"votes":49539,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"조병옥","votes":29034},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"임택수","votes":19373}]},"충북__4__진천군":{"voters":73635,"votes":41294,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"김명식","votes":22773},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"이양섭","votes":17795}]},"충북__4__괴산군":{"voters":35075,"votes":26191,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"이차영","votes":10821},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"송인헌","votes":14605}]},"충북__4__증평군":{"voters":31883,"votes":18963,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"이재영","votes":10593},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"이민표","votes":8094}]},"충남__4__천안시":{"voters":301234,"votes":162227,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"장기수","votes":89233},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"박찬우","votes":66538},{"colIndex":6,"party":"reform","partyName":"개혁신당","name":"이성진","votes":4505}]},"충남__4__공주시":{"voters":90788,"votes":60024,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"김정섭","votes":27059},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"최원철","votes":31353}]},"충남__4__보령시":{"voters":82118,"votes":54329,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"이영우","votes":24349},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"엄승용","votes":27463},{"colIndex":6,"party":"ind","partyName":"무소속","name":"김흥식","votes":1248}]},"충남__4__아산시":{"voters":302051,"votes":163680,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"오세현","votes":99771},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"맹의석","votes":58666},{"colIndex":6,"party":"ind","partyName":"무소속","name":"한태국","votes":2855}]},"충남__4__서산시":{"voters":148383,"votes":88825,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"맹정호","votes":41108},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"이완섭","votes":43949},{"colIndex":6,"party":"reform","partyName":"개혁신당","name":"유관곤","votes":2521}]},"충남__4__태안군":{"voters":54405,"votes":36309,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"강철민","votes":14873},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"윤희신","votes":20602}]},"충남__4__금산군":{"voters":44440,"votes":30279,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"문정우","votes":14855},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"박범인","votes":13888}]},"충남__4__논산시":{"voters":95176,"votes":60227,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"오인환","votes":27025},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"백성현","votes":31000},{"colIndex":6,"party":"reform","partyName":"개혁신당","name":"이창원","votes":870}]},"충남__4__계룡시":{"voters":37968,"votes":24834,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"정준영","votes":11197},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"이응우","votes":13204}]},"충남__4__부여군":{"voters":53402,"votes":37540,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"김민수","votes":14889},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"이용우","votes":14968},{"colIndex":6,"party":"ind","partyName":"무소속","name":"김기서","votes":6743}]},"충남__4__서천군":{"voters":43308,"votes":29572,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"유승광","votes":16258},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김기웅","votes":11978},{"colIndex":6,"party":"reform","partyName":"개혁신당","name":"조중연","votes":584}]},"충남__4__홍성군":{"voters":87823,"votes":55000,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"손세희","votes":23276},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"박정주","votes":29760}]},"충남__4__청양군":{"voters":27925,"votes":20793,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"김돈곤","votes":10073},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"김홍열","votes":10148}]},"충남__4__예산군":{"voters":71046,"votes":44737,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"조한영","votes":15873},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"최재구","votes":27936}]},"충남__4__당진시":{"voters":147876,"votes":83846,"candidates":[{"colIndex":4,"party":"dp","partyName":"더불어민주당","name":"김기재","votes":42507},{"colIndex":5,"party":"ppp","partyName":"국민의힘","name":"오성환","votes":40063}]}};
 
+// ── 의회선거 데이터 (councilData.json) ─────────────────────────
+let councilData = {};
+fetch('./councilData.json').then(r=>r.json()).then(d=>{ councilData = d; }).catch(()=>{});
+
+const CHUNGBUK_CITIES = ['청주시','충주시','제천시','단양군','영동군','보은군','옥천군','음성군','진천군','괴산군','증평군'];
+const CHUNGNAM_CITIES = ['천안시','공주시','보령시','아산시','서산시','태안군','금산군','논산시','계룡시','당진시','부여군','서천군','홍성군','청양군','예산군'];
+
+function parseCouncilLabel(label) {
+  const PARTIES = [
+    ['더불어민주당','dp'],['국민의힘','ppp'],['개혁신당','reform'],
+    ['조국혁신당','reform'],['진보당','progress'],['정의당','justice'],
+    ['기본소득당','other'],['무소속','ind']
+  ];
+  for (const [pName, pKey] of PARTIES) {
+    if (label.startsWith(pName)) return { party:pKey, partyName:pName, name:label.substring(pName.length) };
+  }
+  return { party:'other', partyName:'기타', name:label };
+}
+
+// GeoJSON name → city prefix (청주시상당구 → 청주시)
+function extractCityFromGeoName(nm) {
+  for (const c of ['청주시','천안시','아산시','서산시','논산시','당진시','공주시','보령시','충주시','제천시']) {
+    if (nm.startsWith(c) && nm.length > c.length) return c;
+  }
+  return nm;
+}
+
+function getCouncilAggForGeo(region, ec, nm) {
+  const cityPrefix = normName(extractCityFromGeoName(nm));
+  const relevantCities = region === 'chungbuk' ? CHUNGBUK_CITIES : CHUNGNAM_CITIES;
+  const city = relevantCities.find(c => cityPrefix.startsWith(normName(c)) || normName(c) === cityPrefix);
+  if (!city) return null;
+
+  // 수집 버그로 region prefix가 뒤바뀐 경우가 있어 city 이름으로만 필터링
+  const entries = Object.entries(councilData).filter(([k]) => {
+    const parts = k.split('__');
+    return parseInt(parts[1]) === ec && normName(parts[2]).startsWith(normName(city));
+  });
+  if (entries.length === 0) return null;
+
+  const candMap = {};
+  let voters = 0, votes = 0;
+  const districts = [];
+
+  entries.forEach(([k, d]) => {
+    const distName = k.split('__')[2];
+    if (d.무투표 || d.투표수 === 0) {
+      districts.push({ name:distName, 무투표:true, candidates:[], votes:0 });
+      return;
+    }
+    voters += d.선거인수; votes += d.투표수;
+    const distCands = d.candidates.map(c => {
+      const p = parseCouncilLabel(c.label);
+      if (!candMap[p.party]) candMap[p.party] = { party:p.party, partyName:p.partyName, name:p.partyName, votes:0 };
+      candMap[p.party].votes += c.votes;
+      return { ...p, votes:c.votes };
+    }).sort((a,b) => b.votes - a.votes);
+    districts.push({ name:distName, 무투표:false, candidates:distCands, votes:d.투표수, 선거인수:d.선거인수 });
+  });
+
+  districts.sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+  if (Object.keys(candMap).length === 0) return null;
+  const candidates = Object.values(candMap).sort((a,b) => b.votes - a.votes);
+  return { voters, votes, candidates, districts, totalDistricts:entries.length };
+}
+
 // ── 상태 ─────────────────────────────────────────────────────
 let currentRegion = 'seoul'; // 'seoul' | 'chungbuk' | 'chungnam'
-let currentEc = 3;           // 3 | 4
+let currentEc = 3;           // 3 | 4 | 5 | 6
 let geojsonLayer = null;
 let selectedLayer = null;
 const geojsonCache = {};
@@ -303,14 +371,17 @@ function getDataForName(sigName) {
     if (exact) return exact;
     // 없으면 이 이름이 시(市) 접두사인 경우 → 하위 구 데이터 합산 (e.g. 청주시 → 4구 합산)
     return aggregateByCity(currentRegion, 3, nm);
-  } else {
+  } else if (currentEc === 4) {
     // ec=4: 청주시/천안시 구 폴리곤 → 상위 시 키로 조회
     let base = nm;
     for (const city of ['청주시', '천안시']) {
       if (nm.startsWith(city) && nm.length > city.length) { base = city; break; }
     }
     return chungData[`${r}__4__${base}`] || null;
+  } else if (currentEc === 5 || currentEc === 6) {
+    return getCouncilAggForGeo(currentRegion, currentEc, nm);
   }
+  return null;
 }
 
 // 후보 중 최다 득표자 반환
@@ -388,10 +459,50 @@ function bindTooltip(layer, feature) {
 
 // 상세 패널
 function showDetailPanel(sigName) {
-  // ec=4 청주시/천안시 구는 상위 시명으로 표시
   let displayName = sigName;
   const d = getDataForName(sigName);
   if (!d) return;
+
+  // ec=5/6 의회선거: 선거구별 결과 목록 표시
+  if (currentEc === 5 || currentEc === 6) {
+    const ecLabel = currentEc === 5 ? '시도의회' : '구시군의회';
+    const cityName = normName(extractCityFromGeoName(normName(sigName)));
+    document.getElementById('detailTitle').innerHTML = `${cityName} ${ecLabel}의원선거`;
+
+    const contested = d.districts.filter(dist => !dist.무투표);
+    let html = '';
+    if (contested.length === 0) {
+      html = '<div style="color:#888;padding:10px 0">경쟁 선거구 없음</div>';
+    } else {
+      html = contested.map(dist => {
+        const w = dist.candidates[0];
+        const wColor = w ? partyColor(w.party) : '#888';
+        const wPct = w && dist.votes ? (w.votes/dist.votes*100).toFixed(1) : '0';
+        const r2 = dist.candidates[1];
+        const r2Color = r2 ? partyColor(r2.party) : '#888';
+        const r2Pct = r2 && dist.votes ? (r2.votes/dist.votes*100).toFixed(1) : '';
+        return `
+          <div style="padding:7px 0;border-bottom:1px solid #2a2d3a">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:0.8rem;color:#ccc;font-weight:600">${dist.name}</span>
+              <span style="font-size:0.72rem;color:#666">${fmt(dist.votes)}표</span>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              ${w ? `<span style="font-size:0.78rem;color:${wColor}">▲ ${w.partyName} ${w.name} ${wPct}%</span>` : ''}
+              ${r2 ? `<span style="font-size:0.75rem;color:${r2Color}">▼ ${r2.partyName} ${r2.name} ${r2Pct}%</span>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    const mutu = d.totalDistricts - contested.length;
+    document.getElementById('detailContent').innerHTML = html;
+    document.getElementById('detailExtra').innerHTML =
+      `총 선거구: <span>${d.totalDistricts}개</span> (경쟁 <span>${contested.length}</span> · 무투표 <span>${mutu}</span>)<br>
+       총 투표수: <span>${fmt(d.votes)}표</span> &nbsp;·&nbsp; 투표율: <span>${d.voters?(d.votes/d.voters*100).toFixed(1):0}%</span>`;
+    document.getElementById('detailPanel').classList.add('show');
+    return;
+  }
 
   const sorted = d.candidates.slice().sort((a,b) => b.votes - a.votes);
   const winner = sorted[0];
@@ -544,9 +655,8 @@ function buildSummaryBar() {
           <div class="label">투표율</div>
           <div class="value" style="color:#ccc">${(totalVotes/totalVoters*100).toFixed(1)}%</div>
         </div>`;
-    } else {
+    } else if (currentEc === 4) {
       // 구시군장 – 시군별 당선 현황 (중복 없음)
-      // ec=4는 시 단위이므로 청주시/천안시가 하나씩 있음
       let dpWins = 0, pppWins = 0, otherWins = 0;
       entries.forEach(([k, d]) => {
         const w = getWinner(d);
@@ -584,6 +694,71 @@ function buildSummaryBar() {
             <div class="dp-seg"  style="width:${(dpWins/total*100).toFixed(0)}%"></div>
             <div class="ppp-seg" style="width:${(pppWins/total*100).toFixed(0)}%"></div>
           </div>
+        </div>`;
+    } else if (currentEc === 5 || currentEc === 6) {
+      // 의회선거 – 전체 득표 현황
+      const relevantCities = currentRegion === 'chungbuk' ? CHUNGBUK_CITIES : CHUNGNAM_CITIES;
+      const partyVotes = {}, partyFirst = {};
+      let totalVoters = 0, totalVotes = 0;
+
+      Object.entries(councilData).forEach(([k, d]) => {
+        const parts = k.split('__');
+        if (parseInt(parts[1]) !== currentEc) return;
+        const city = relevantCities.find(c => normName(parts[2]).startsWith(normName(c)));
+        if (!city) return;
+        if (d.무투표 || d.투표수 === 0) return;
+        totalVoters += d.선거인수; totalVotes += d.투표수;
+        // 1위 후보 정당 집계
+        const winner = d.candidates.reduce((a,b) => a.votes>b.votes?a:b, {votes:-1,label:''});
+        if (winner.label) {
+          const wp = parseCouncilLabel(winner.label);
+          if (!partyFirst[wp.party]) partyFirst[wp.party] = { partyName:wp.partyName, count:0 };
+          partyFirst[wp.party].count++;
+        }
+        d.candidates.forEach(c => {
+          const p = parseCouncilLabel(c.label);
+          if (!partyVotes[p.party]) partyVotes[p.party] = { partyName:p.partyName, votes:0 };
+          partyVotes[p.party].votes += c.votes;
+        });
+      });
+
+      const dp  = partyVotes['dp']  || { votes:0 };
+      const ppp = partyVotes['ppp'] || { votes:0 };
+      const dpFirst  = partyFirst['dp']  || { count:0 };
+      const pppFirst = partyFirst['ppp'] || { count:0 };
+      const ecLabel = currentEc === 5 ? '시도의회' : '구시군의회';
+      const total = (dpFirst.count||0) + (pppFirst.count||0) +
+        Object.entries(partyFirst).filter(([p])=>p!=='dp'&&p!=='ppp').reduce((s,[,v])=>s+v.count,0);
+
+      bar.innerHTML = `
+        <div class="summary-item">
+          <div class="label">${ecLabel} 선거 현황</div>
+          <div class="value" style="color:#ccc">경쟁 ${total}개 선거구</div>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+          <div class="label">🔵 더불어민주당</div>
+          <div class="value dp-color">${dpFirst.count}곳 1위 · ${totalVotes?(dp.votes/totalVotes*100).toFixed(1):0}%</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">🔴 국민의힘</div>
+          <div class="value ppp-color">${pppFirst.count}곳 1위 · ${totalVotes?(ppp.votes/totalVotes*100).toFixed(1):0}%</div>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item vote-bar-wrap">
+          <div class="vote-bar-labels">
+            <span class="dp-color">민주 ${totalVotes?((dp.votes/(dp.votes+ppp.votes||1))*100).toFixed(1):0}%</span>
+            <span class="ppp-color">국힘 ${totalVotes?((ppp.votes/(dp.votes+ppp.votes||1))*100).toFixed(1):0}%</span>
+          </div>
+          <div class="vote-bar">
+            <div class="dp-seg"  style="width:${dp.votes+ppp.votes?(dp.votes/(dp.votes+ppp.votes)*100).toFixed(1):50}%"></div>
+            <div class="ppp-seg" style="width:${dp.votes+ppp.votes?(ppp.votes/(dp.votes+ppp.votes)*100).toFixed(1):50}%"></div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+          <div class="label">투표율</div>
+          <div class="value" style="color:#ccc">${totalVoters?(totalVotes/totalVoters*100).toFixed(1):0}%</div>
         </div>`;
     }
   }
