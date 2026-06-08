@@ -263,43 +263,60 @@ function extractCityFromGeoName(nm) {
   return nm;
 }
 
-function getCouncilAggForGeo(region, ec, nm) {
-  const cityPrefix = normName(extractCityFromGeoName(nm));
-  const relevantCities = region === 'chungbuk' ? CHUNGBUK_CITIES : CHUNGNAM_CITIES;
-  const city = relevantCities.find(c => cityPrefix.startsWith(normName(c)) || normName(c) === cityPrefix);
-  if (!city) return null;
+// GeoJSON 이름 → councilData city 매핑 (행정구역 변경 반영)
+// 2014 청원군→청주시청원구, 청주시상당구에서 서원구 분리
+const GEO_TO_CITY_MAP = {
+  '청원군': ['청주시청원구'],
+  '청주시상당구': ['청주시상당구', '청주시서원구'],
+};
 
-  // 수집 버그로 region prefix가 뒤바뀐 경우가 있어 city 이름으로만 필터링
-  const entries = Object.entries(councilData).filter(([k]) => {
-    const parts = k.split('__');
-    return parseInt(parts[1]) === ec && normName(parts[2]).startsWith(normName(city));
+function getCouncilAggForGeo(region, ec, nm) {
+  const r = region === 'chungbuk' ? '충북' : '충남';
+  const prefix = r + '__' + ec + '__';
+
+  // GeoJSON 이름으로 매칭할 city 목록 결정
+  const targetCities = GEO_TO_CITY_MAP[nm] || [nm];
+
+  const entries = Object.entries(councilData).filter(([k, d]) => {
+    return k.startsWith(prefix) && targetCities.includes(d.city);
   });
   if (entries.length === 0) return null;
 
-  const candMap = {};
+  // 당선인(winners) 기반 의석 집계
+  const seatMap = {};
   let voters = 0, votes = 0;
+  let totalSeats = 0;
   const districts = [];
 
   entries.forEach(([k, d]) => {
     const distName = k.split('__')[2];
-    if (d.무투표 || d.투표수 === 0) {
-      districts.push({ name:distName, 무투표:true, candidates:[], votes:0 });
-      return;
-    }
-    voters += d.선거인수; votes += d.투표수;
-    const distCands = d.candidates.map(c => {
-      const p = parseCouncilLabel(c.label);
-      if (!candMap[p.party]) candMap[p.party] = { party:p.party, partyName:p.partyName, name:p.partyName, votes:0 };
-      candMap[p.party].votes += c.votes;
-      return { ...p, votes:c.votes };
-    }).sort((a,b) => b.votes - a.votes);
-    districts.push({ name:distName, 무투표:false, candidates:distCands, votes:d.투표수, 선거인수:d.선거인수 });
+    const winners = d.winners || [];
+    const isMutoopyo = d['무투표'] || false;
+    voters += d.voters || 0;
+    votes  += d.votes  || 0;
+    totalSeats += winners.length;
+
+    winners.forEach(w => {
+      if (!seatMap[w.party]) seatMap[w.party] = { party:w.party, partyName:w.partyName, seats:0, votes:0 };
+      seatMap[w.party].seats++;
+      seatMap[w.party].votes += w.votes || 0;
+    });
+
+    districts.push({
+      name: distName,
+      '무투표': isMutoopyo,
+      candidates: (d.candidates || []).sort((a,b) => b.votes - a.votes),
+      winners: winners,
+      seats: winners.length,
+      votes: d.votes || 0,
+      voters: d.voters || 0,
+    });
   });
 
   districts.sort((a,b) => a.name.localeCompare(b.name, 'ko'));
-  if (Object.keys(candMap).length === 0) return null;
-  const candidates = Object.values(candMap).sort((a,b) => b.votes - a.votes);
-  return { voters, votes, candidates, districts, totalDistricts:entries.length };
+  if (Object.keys(seatMap).length === 0) return null;
+  const candidates = Object.values(seatMap).sort((a,b) => b.seats - a.seats);
+  return { voters, votes, candidates, districts, totalDistricts:entries.length, totalSeats };
 }
 
 // ── 상태 ─────────────────────────────────────────────────────
@@ -392,6 +409,8 @@ const PARTY_COLOR = {
   reform:  '#ff9800',
   justice: '#ffeb3b',
   progress:'#e040fb',
+  jinbo:   '#e040fb',
+  joguk:   '#00bcd4',
   ind:     '#999999',
   other:   '#aaaaaa',
 };
@@ -402,20 +421,41 @@ function getStyle(feature, highlight = false) {
   const name = featureName(feature);
   const d = getDataForName(name);
   if (!d) return { fillColor: '#2a2d3a', color: '#444', weight: 1, fillOpacity: 0.5 };
-  const winner = getWinner(d);
-  const top2 = d.candidates.slice().sort((a,b)=>b.votes-a.votes).slice(0,2);
-  const gapPct = top2.length >= 2
-    ? Math.abs(top2[0].votes - top2[1].votes) / d.votes * 100
-    : 50;
-  const intensity = Math.min(gapPct / 20, 1);
+
   let fillColor;
-  if (winner.party === 'ppp') {
-    fillColor = `rgba(255,${Math.round(80-intensity*60)},${Math.round(80-intensity*60)},0.85)`;
-  } else if (winner.party === 'dp') {
-    fillColor = `rgba(${Math.round(60-intensity*40)},${Math.round(120-intensity*50)},255,0.85)`;
+  if ((currentEc === 5 || currentEc === 6) && currentRegion !== 'seoul') {
+    // 의회선거: 의석수 기반 색상
+    const sorted = d.candidates.slice().sort((a,b) => b.seats - a.seats);
+    const top = sorted[0];
+    if (!top) return { fillColor: '#2a2d3a', color: '#444', weight: 1, fillOpacity: 0.5 };
+    const totalSeats = d.totalSeats || sorted.reduce((s,c) => s + c.seats, 0);
+    const ratio = top.seats / totalSeats; // 지배적일수록 진하게
+    const intensity = Math.min((ratio - 0.3) / 0.5, 1); // 0.3~0.8 → 0~1
+    if (top.party === 'ppp') {
+      fillColor = `rgba(255,${Math.round(80-intensity*60)},${Math.round(80-intensity*60)},0.85)`;
+    } else if (top.party === 'dp') {
+      fillColor = `rgba(${Math.round(60-intensity*40)},${Math.round(120-intensity*50)},255,0.85)`;
+    } else {
+      fillColor = `rgba(150,150,150,0.75)`;
+    }
   } else {
-    fillColor = `rgba(150,150,150,0.75)`;
+    // 시도지사/구시군장/서울: 득표수 기반
+    const winner = getWinner(d);
+    const top2 = d.candidates.slice().sort((a,b)=>b.votes-a.votes).slice(0,2);
+    const validVotes = d.candidates.reduce((s,c) => s+c.votes, 0);
+    const gapPct = top2.length >= 2
+      ? Math.abs(top2[0].votes - top2[1].votes) / validVotes * 100
+      : 50;
+    const intensity = Math.min(gapPct / 20, 1);
+    if (winner.party === 'ppp') {
+      fillColor = `rgba(255,${Math.round(80-intensity*60)},${Math.round(80-intensity*60)},0.85)`;
+    } else if (winner.party === 'dp') {
+      fillColor = `rgba(${Math.round(60-intensity*40)},${Math.round(120-intensity*50)},255,0.85)`;
+    } else {
+      fillColor = `rgba(150,150,150,0.75)`;
+    }
   }
+
   return {
     fillColor,
     color: highlight ? '#fff' : 'rgba(255,255,255,0.25)',
@@ -429,28 +469,52 @@ function bindTooltip(layer, feature) {
   const name = featureName(feature);
   const d = getDataForName(name);
   if (!d) return;
-  const sorted = d.candidates.slice().sort((a,b) => b.votes - a.votes);
-  const w = sorted[0], r = sorted[1];
-  const validVotes = d.candidates.reduce((s,c) => s+c.votes, 0);
-  const wPct = (w.votes / validVotes * 100).toFixed(1);
-  const rPct = r ? (r.votes / validVotes * 100).toFixed(1) : '';
-  const wColor = partyColor(w.party);
-  const rColor = r ? partyColor(r.party) : '#888';
-  layer.bindTooltip(`
-    <div class="map-tooltip">
-      <div class="tt-name">${name}
-        <span class="tt-winner" style="background:${wColor};color:#fff">${w.partyName} 우세</span>
+
+  if ((currentEc === 5 || currentEc === 6) && currentRegion !== 'seoul') {
+    const sorted = d.candidates.slice().sort((a,b) => b.seats - a.seats);
+    const totalSeats = d.totalSeats || sorted.reduce((s,c) => s + c.seats, 0);
+    const top = sorted[0];
+    const topColor = partyColor(top.party);
+    const rows = sorted.filter(c => c.seats > 0).map(c => {
+      const color = partyColor(c.party);
+      return `<div class="tt-row">
+        <span class="tt-cand" style="color:${color}">${c.partyName}</span>
+        <span class="tt-pct" style="color:${color}">${c.seats}석</span>
+      </div>`;
+    }).join('');
+    layer.bindTooltip(`
+      <div class="map-tooltip">
+        <div class="tt-name">${name}
+          <span class="tt-winner" style="background:${topColor};color:#fff">${top.partyName} ${top.seats}석</span>
+        </div>
+        ${rows}
+        <div class="tt-row" style="color:#888;font-size:0.7rem">총 ${totalSeats}석 · ${d.totalDistricts}개 선거구</div>
       </div>
-      <div class="tt-row">
-        <span class="tt-cand" style="color:${wColor}">▲ ${w.name}</span>
-        <span class="tt-pct" style="color:${wColor}">${wPct}%</span>
+    `, { sticky: true, opacity: 1 });
+  } else {
+    const sorted = d.candidates.slice().sort((a,b) => b.votes - a.votes);
+    const w = sorted[0], r = sorted[1];
+    const validVotes = d.candidates.reduce((s,c) => s+c.votes, 0);
+    const wPct = (w.votes / validVotes * 100).toFixed(1);
+    const rPct = r ? (r.votes / validVotes * 100).toFixed(1) : '';
+    const wColor = partyColor(w.party);
+    const rColor = r ? partyColor(r.party) : '#888';
+    layer.bindTooltip(`
+      <div class="map-tooltip">
+        <div class="tt-name">${name}
+          <span class="tt-winner" style="background:${wColor};color:#fff">${w.partyName} 우세</span>
+        </div>
+        <div class="tt-row">
+          <span class="tt-cand" style="color:${wColor}">▲ ${w.name}</span>
+          <span class="tt-pct" style="color:${wColor}">${wPct}%</span>
+        </div>
+        ${r ? `<div class="tt-row">
+          <span class="tt-cand" style="color:${rColor}">▼ ${r.name}</span>
+          <span class="tt-pct" style="color:${rColor}">${rPct}%</span>
+        </div>` : ''}
       </div>
-      ${r ? `<div class="tt-row">
-        <span class="tt-cand" style="color:${rColor}">▼ ${r.name}</span>
-        <span class="tt-pct" style="color:${rColor}">${rPct}%</span>
-      </div>` : ''}
-    </div>
-  `, { sticky: true, opacity: 1 });
+    `, { sticky: true, opacity: 1 });
+  }
 }
 
 // 상세 패널
@@ -459,44 +523,56 @@ function showDetailPanel(sigName) {
   const d = getDataForName(sigName);
   if (!d) return;
 
-  // ec=5/6 의회선거: 선거구별 결과 목록 표시
-  if (currentEc === 5 || currentEc === 6) {
+  // ec=5/6 의회선거: 선거구별 당선인 목록 표시
+  if ((currentEc === 5 || currentEc === 6) && currentRegion !== 'seoul') {
     const ecLabel = currentEc === 5 ? '시도의회' : '구시군의회';
-    const cityName = normName(extractCityFromGeoName(normName(sigName)));
-    document.getElementById('detailTitle').innerHTML = `${cityName} ${ecLabel}의원선거`;
+    const cityName = extractCityFromGeoName(normName(sigName));
+    const sorted = d.candidates.slice().sort((a,b) => b.seats - a.seats);
+    const topParty = sorted[0];
+    const badgeClass = topParty.party === 'ppp' ? 'winner-ppp' : topParty.party === 'dp' ? 'winner-dp' : 'winner-ind';
+    document.getElementById('detailTitle').innerHTML =
+      `${cityName} ${ecLabel}의원 <span class="winner-badge ${badgeClass}">${topParty.partyName} ${topParty.seats}석</span>`;
 
-    const contested = d.districts.filter(dist => !dist.무투표);
-    let html = '';
-    if (contested.length === 0) {
-      html = '<div style="color:#888;padding:10px 0">경쟁 선거구 없음</div>';
-    } else {
-      html = contested.map(dist => {
-        const w = dist.candidates[0];
-        const wColor = w ? partyColor(w.party) : '#888';
-        const distValid = dist.candidates.reduce((s,c) => s+c.votes, 0);
-        const wPct = w && distValid ? (w.votes/distValid*100).toFixed(1) : '0';
-        const r2 = dist.candidates[1];
-        const r2Color = r2 ? partyColor(r2.party) : '#888';
-        const r2Pct = r2 && distValid ? (r2.votes/distValid*100).toFixed(1) : '';
-        return `
-          <div style="padding:7px 0;border-bottom:1px solid #2a2d3a">
-            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-              <span style="font-size:0.8rem;color:#ccc;font-weight:600">${dist.name}</span>
-              <span style="font-size:0.72rem;color:#666">${fmt(dist.votes)}표</span>
-            </div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              ${w ? `<span style="font-size:0.78rem;color:${wColor}">▲ ${w.partyName} ${w.name} ${wPct}%</span>` : ''}
-              ${r2 ? `<span style="font-size:0.75rem;color:${r2Color}">▼ ${r2.partyName} ${r2.name} ${r2Pct}%</span>` : ''}
-            </div>
-          </div>`;
-      }).join('');
-    }
+    // 의석 요약 바
+    const totalSeats = d.totalSeats;
+    const seatBar = sorted.filter(c=>c.seats>0).map(c => {
+      const color = partyColor(c.party);
+      const pct = (c.seats / totalSeats * 100).toFixed(1);
+      return `<div style="flex:${c.seats};background:${color};height:8px;border-radius:4px;min-width:4px" title="${c.partyName} ${c.seats}석"></div>`;
+    }).join('');
 
-    const mutu = d.totalDistricts - contested.length;
-    document.getElementById('detailContent').innerHTML = html;
+    const seatLabels = sorted.filter(c=>c.seats>0).map(c => {
+      const color = partyColor(c.party);
+      return `<span style="color:${color};font-size:0.78rem;font-weight:600">${c.partyName} ${c.seats}석</span>`;
+    }).join(' · ');
+
+    // 선거구별 당선인 목록
+    let distHtml = d.districts.map(dist => {
+      const winners = dist.winners || [];
+      const isMutoopyo = dist['무투표'];
+      const winnerTags = winners.map(w => {
+        const color = partyColor(w.party);
+        const voteStr = w.votes ? `${fmt(w.votes)}표` : '무투표';
+        return `<span style="font-size:0.75rem;color:${color}">● ${w.partyName} ${w.name} <span style="color:#777">${voteStr}</span></span>`;
+      }).join('<br>');
+
+      return `
+        <div style="padding:7px 0;border-bottom:1px solid #2a2d3a">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:0.8rem;color:#ccc;font-weight:600">${dist.name}</span>
+            <span style="font-size:0.72rem;color:#666">${isMutoopyo ? '무투표' : (dist.seats || winners.length) + '인 선출'}</span>
+          </div>
+          <div style="line-height:1.6">${winnerTags}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('detailContent').innerHTML = `
+      <div style="margin-bottom:10px">
+        <div style="margin-bottom:4px">${seatLabels}</div>
+        <div style="display:flex;gap:2px;border-radius:4px;overflow:hidden">${seatBar}</div>
+      </div>${distHtml}`;
     document.getElementById('detailExtra').innerHTML =
-      `총 선거구: <span>${d.totalDistricts}개</span> (경쟁 <span>${contested.length}</span> · 무투표 <span>${mutu}</span>)<br>
-       총 투표수: <span>${fmt(d.votes)}표</span> &nbsp;·&nbsp; 투표율: <span>${d.voters?(d.votes/d.voters*100).toFixed(1):0}%</span>`;
+      `총 ${totalSeats}석 · ${d.totalDistricts}개 선거구`;
     document.getElementById('detailPanel').classList.add('show');
     return;
   }
@@ -696,63 +772,58 @@ function buildSummaryBar() {
           </div>
         </div>`;
     } else if (currentEc === 5 || currentEc === 6) {
-      // 의회선거 – 전체 득표 현황
-      const relevantCities = currentRegion === 'chungbuk' ? CHUNGBUK_CITIES : CHUNGNAM_CITIES;
-      const partyVotes = {}, partyFirst = {};
+      // 의회선거 – 당선인 기반 의석 현황
+      const r = currentRegion === 'chungbuk' ? '충북' : '충남';
+      const prefix = `${r}__${currentEc}__`;
+      const councilEntries = Object.entries(councilData).filter(([k]) => k.startsWith(prefix));
+
+      const partySeats = {};
+      let totalSeats = 0, totalDistricts = councilEntries.length;
       let totalVoters = 0, totalVotes = 0;
 
-      Object.entries(councilData).forEach(([k, d]) => {
-        const parts = k.split('__');
-        if (parseInt(parts[1]) !== currentEc) return;
-        const city = relevantCities.find(c => normName(parts[2]).startsWith(normName(c)));
-        if (!city) return;
-        if (d.무투표 || d.투표수 === 0) return;
-        totalVoters += d.선거인수; totalVotes += d.투표수;
-        // 1위 후보 정당 집계
-        const winner = d.candidates.reduce((a,b) => a.votes>b.votes?a:b, {votes:-1,label:''});
-        if (winner.label) {
-          const wp = parseCouncilLabel(winner.label);
-          if (!partyFirst[wp.party]) partyFirst[wp.party] = { partyName:wp.partyName, count:0 };
-          partyFirst[wp.party].count++;
-        }
-        d.candidates.forEach(c => {
-          const p = parseCouncilLabel(c.label);
-          if (!partyVotes[p.party]) partyVotes[p.party] = { partyName:p.partyName, votes:0 };
-          partyVotes[p.party].votes += c.votes;
+      councilEntries.forEach(([k, d]) => {
+        totalVoters += d.voters || 0;
+        totalVotes += d.votes || 0;
+        const winners = d.winners || [];
+        winners.forEach(w => {
+          totalSeats++;
+          if (!partySeats[w.party]) partySeats[w.party] = { partyName:w.partyName, seats:0 };
+          partySeats[w.party].seats++;
         });
       });
 
-      const dp  = partyVotes['dp']  || { votes:0 };
-      const ppp = partyVotes['ppp'] || { votes:0 };
-      const dpFirst  = partyFirst['dp']  || { count:0 };
-      const pppFirst = partyFirst['ppp'] || { count:0 };
+      const dpSeats  = (partySeats['dp']  || { seats:0 }).seats;
+      const pppSeats = (partySeats['ppp'] || { seats:0 }).seats;
+      const otherSeats = totalSeats - dpSeats - pppSeats;
       const ecLabel = currentEc === 5 ? '시도의회' : '구시군의회';
-      const total = (dpFirst.count||0) + (pppFirst.count||0) +
-        Object.entries(partyFirst).filter(([p])=>p!=='dp'&&p!=='ppp').reduce((s,[,v])=>s+v.count,0);
 
       bar.innerHTML = `
         <div class="summary-item">
-          <div class="label">${ecLabel} 선거 현황</div>
-          <div class="value" style="color:#ccc">경쟁 ${total}개 선거구</div>
+          <div class="label">${ecLabel} 의석 현황</div>
+          <div class="value" style="color:#ccc">총 ${totalSeats}석 · ${totalDistricts}개 선거구</div>
         </div>
         <div class="divider"></div>
         <div class="summary-item">
           <div class="label">🔵 더불어민주당</div>
-          <div class="value dp-color">${dpFirst.count}곳 1위 · ${totalVotes?(dp.votes/totalVotes*100).toFixed(1):0}%</div>
+          <div class="value dp-color">${dpSeats}석</div>
         </div>
         <div class="summary-item">
           <div class="label">🔴 국민의힘</div>
-          <div class="value ppp-color">${pppFirst.count}곳 1위 · ${totalVotes?(ppp.votes/totalVotes*100).toFixed(1):0}%</div>
+          <div class="value ppp-color">${pppSeats}석</div>
         </div>
+        ${otherSeats > 0 ? `<div class="summary-item">
+          <div class="label">기타</div>
+          <div class="value" style="color:#aaa">${otherSeats}석</div>
+        </div>` : ''}
         <div class="divider"></div>
         <div class="summary-item vote-bar-wrap">
           <div class="vote-bar-labels">
-            <span class="dp-color">민주 ${totalVotes?((dp.votes/(dp.votes+ppp.votes||1))*100).toFixed(1):0}%</span>
-            <span class="ppp-color">국힘 ${totalVotes?((ppp.votes/(dp.votes+ppp.votes||1))*100).toFixed(1):0}%</span>
+            <span class="dp-color">민주 ${dpSeats}석</span>
+            <span class="ppp-color">국힘 ${pppSeats}석</span>
           </div>
           <div class="vote-bar">
-            <div class="dp-seg"  style="width:${dp.votes+ppp.votes?(dp.votes/(dp.votes+ppp.votes)*100).toFixed(1):50}%"></div>
-            <div class="ppp-seg" style="width:${dp.votes+ppp.votes?(ppp.votes/(dp.votes+ppp.votes)*100).toFixed(1):50}%"></div>
+            <div class="dp-seg"  style="width:${(dpSeats/totalSeats*100).toFixed(1)}%"></div>
+            <div class="ppp-seg" style="width:${(pppSeats/totalSeats*100).toFixed(1)}%"></div>
           </div>
         </div>
         <div class="divider"></div>
@@ -770,15 +841,22 @@ function buildSidebar(names) {
   const container = document.getElementById('districtList');
   container.innerHTML = '';
 
+  const isCouncil = (currentEc === 5 || currentEc === 6) && currentRegion !== 'seoul';
+
   const sorted = names
     .filter(({d}) => d)
     .map(({sigName, displayName, d}) => {
+      if (isCouncil) {
+        const top = d.candidates.slice().sort((a,b) => b.seats - a.seats)[0];
+        return { sigName, displayName, d, w: top, gapPct: 0, totalSeats: d.totalSeats };
+      }
       const top2 = d.candidates.slice().sort((a,b)=>b.votes-a.votes);
       const w = top2[0], r = top2[1];
-      const gapPct = r ? Math.abs(w.votes - r.votes) / d.votes * 100 : 50;
+      const validVotes = d.candidates.reduce((s,c) => s+c.votes, 0);
+      const gapPct = r ? Math.abs(w.votes - r.votes) / validVotes * 100 : 50;
       return { sigName, displayName, d, w, gapPct };
     })
-    .sort((a,b) => b.gapPct - a.gapPct);
+    .sort((a,b) => isCouncil ? (b.totalSeats||0) - (a.totalSeats||0) : b.gapPct - a.gapPct);
 
   // 당선자별로 묶기
   const grouped = {};
@@ -787,7 +865,7 @@ function buildSidebar(names) {
     if (!grouped[p]) grouped[p] = [];
     grouped[p].push(item);
   });
-  const order = ['ppp','dp','reform','ind','justice','progress','other'];
+  const order = ['ppp','dp','reform','ind','justice','progress','joguk','jinbo','other'];
   const all = order.flatMap(p => grouped[p] || []);
 
   all.forEach((item, i) => {
@@ -795,14 +873,27 @@ function buildSidebar(names) {
     const div = document.createElement('div');
     div.className = 'district-item';
     div.dataset.name = item.sigName;
+
+    let infoLine, gapBadge;
+    if (isCouncil) {
+      const seatList = item.d.candidates.filter(c=>c.seats>0).sort((a,b)=>b.seats-a.seats)
+        .map(c=>`<span style="color:${partyColor(c.party)}">${c.partyName.slice(0,2)} ${c.seats}</span>`).join(' · ');
+      infoLine = seatList;
+      gapBadge = `<span style="font-size:0.75rem;font-weight:700;color:${color}">${item.totalSeats}석</span>`;
+    } else {
+      const validVotes = item.d.candidates.reduce((s,c) => s+c.votes, 0);
+      infoLine = `${item.w.name} ${(item.w.votes/validVotes*100).toFixed(1)}% · 격차 ${item.gapPct.toFixed(1)}%p`;
+      gapBadge = `<span class="district-gap ${item.w.party === 'ppp' ? 'ppp' : item.w.party === 'dp' ? 'dp' : 'ind'}">+${item.gapPct.toFixed(1)}%p</span>`;
+    }
+
     div.innerHTML = `
       <div class="district-rank">${i+1}</div>
       <div class="district-color-dot" style="background:${color}"></div>
       <div class="district-name">
         <div style="font-weight:600">${item.displayName}</div>
-        <div style="font-size:0.7rem;color:#666;margin-top:1px">${item.w.name} ${(item.w.votes/item.d.votes*100).toFixed(1)}% · 격차 ${item.gapPct.toFixed(1)}%p</div>
+        <div style="font-size:0.7rem;color:#666;margin-top:1px">${infoLine}</div>
       </div>
-      <div class="district-gap ${item.w.party === 'ppp' ? 'ppp' : item.w.party === 'dp' ? 'dp' : 'ind'}">+${item.gapPct.toFixed(1)}%p</div>
+      ${gapBadge}
     `;
     div.addEventListener('click', () => {
       showDetailPanel(item.sigName);
@@ -880,8 +971,10 @@ function loadAndRender() {
         });
       }
     }).addTo(map);
+    geojsonLayer.bringToFront();
 
-    // Fit bounds
+    // Fit bounds (invalidateSize ensures container dimensions are correct on initial load)
+    map.invalidateSize();
     try { map.fitBounds(geojsonLayer.getBounds(), {padding:[20,20]}); } catch(e) {}
 
     buildSidebar(sidebarNames);
@@ -960,6 +1053,18 @@ document.getElementById('detailClose').addEventListener('click', () => {
 
 // ── 초기 로드 ────────────────────────────────────────────────
 loadAndRender();
+// 지도 컨테이너가 0→비0으로 전환 시 fitBounds 재실행 (초기 로드 보정용, 1회만)
+const _ro = new ResizeObserver((entries) => {
+  const {width, height} = entries[0].contentRect;
+  if (width > 0 && height > 0) {
+    _ro.disconnect();
+    map.invalidateSize();
+    if (geojsonLayer) {
+      try { map.fitBounds(geojsonLayer.getBounds(), {padding:[20,20]}); } catch(e) {}
+    }
+  }
+});
+_ro.observe(document.getElementById('map'));
 </script>
 </body>
 </html>
