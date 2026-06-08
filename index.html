@@ -431,8 +431,9 @@ function bindTooltip(layer, feature) {
   if (!d) return;
   const sorted = d.candidates.slice().sort((a,b) => b.votes - a.votes);
   const w = sorted[0], r = sorted[1];
-  const wPct = (w.votes / d.votes * 100).toFixed(1);
-  const rPct = r ? (r.votes / d.votes * 100).toFixed(1) : '';
+  const validVotes = d.candidates.reduce((s,c) => s+c.votes, 0);
+  const wPct = (w.votes / validVotes * 100).toFixed(1);
+  const rPct = r ? (r.votes / validVotes * 100).toFixed(1) : '';
   const wColor = partyColor(w.party);
   const rColor = r ? partyColor(r.party) : '#888';
   layer.bindTooltip(`
@@ -472,10 +473,11 @@ function showDetailPanel(sigName) {
       html = contested.map(dist => {
         const w = dist.candidates[0];
         const wColor = w ? partyColor(w.party) : '#888';
-        const wPct = w && dist.votes ? (w.votes/dist.votes*100).toFixed(1) : '0';
+        const distValid = dist.candidates.reduce((s,c) => s+c.votes, 0);
+        const wPct = w && distValid ? (w.votes/distValid*100).toFixed(1) : '0';
         const r2 = dist.candidates[1];
         const r2Color = r2 ? partyColor(r2.party) : '#888';
-        const r2Pct = r2 && dist.votes ? (r2.votes/dist.votes*100).toFixed(1) : '';
+        const r2Pct = r2 && distValid ? (r2.votes/distValid*100).toFixed(1) : '';
         return `
           <div style="padding:7px 0;border-bottom:1px solid #2a2d3a">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px">
@@ -507,9 +509,10 @@ function showDetailPanel(sigName) {
   document.getElementById('detailTitle').innerHTML =
     `${displayName} <span class="winner-badge ${badgeClass}">${badgeText}</span>`;
 
-  const maxPct = sorted[0].votes / d.votes * 100;
+  const validVotes = sorted.reduce((s,c) => s+c.votes, 0);
+  const maxPct = sorted[0].votes / validVotes * 100;
   let html = sorted.map(c => {
-    const pct = (c.votes / d.votes * 100);
+    const pct = (c.votes / validVotes * 100);
     const color = partyColor(c.party);
     return `
       <div class="cand-row">
@@ -524,7 +527,7 @@ function showDetailPanel(sigName) {
 
   const turnout = (d.votes / d.voters * 100).toFixed(1);
   const gap = sorted[0].votes - (sorted[1] ? sorted[1].votes : 0);
-  const gapPct = (gap / d.votes * 100).toFixed(2);
+  const gapPct = (gap / validVotes * 100).toFixed(2);
 
   document.getElementById('detailContent').innerHTML = html;
   document.getElementById('detailExtra').innerHTML =
@@ -538,19 +541,20 @@ function buildSummaryBar() {
   const bar = document.getElementById('summaryBar');
   if (currentRegion === 'seoul') {
     // 서울 전체 합산
-    let dp = 0, ppp = 0, voters = 0, votes = 0;
+    let dp = 0, ppp = 0, voters = 0, votes = 0, seoulValid = 0;
     let dpWins = 0, pppWins = 0;
     Object.values(seoulData).forEach(d => {
       voters += d.voters; votes += d.votes;
       d.candidates.forEach(c => {
+        seoulValid += c.votes;
         if (c.party === 'dp') dp += c.votes;
         if (c.party === 'ppp') ppp += c.votes;
       });
       const w = getWinner(d);
       if (w.party === 'ppp') pppWins++; else dpWins++;
     });
-    const dpPct = (dp/votes*100).toFixed(2);
-    const pppPct = (ppp/votes*100).toFixed(2);
+    const dpPct = (dp/seoulValid*100).toFixed(2);
+    const pppPct = (ppp/seoulValid*100).toFixed(2);
     const gap = Math.abs(ppp - dp);
     const gapPct = Math.abs(parseFloat(pppPct) - parseFloat(dpPct)).toFixed(2);
     const winner = ppp > dp;
@@ -596,13 +600,14 @@ function buildSummaryBar() {
     if (currentEc === 3) {
       // 시도지사 – 지역 합산
       const totals = {};
-      let totalVoters = 0, totalVotes = 0;
+      let totalVoters = 0, totalVotes = 0, totalValidVotes = 0;
       const seen = new Set(); // ec=3 충북 청주시는 4구로 나뉘어 중복 집계됨 → 유권자 중복 주의
       // 실제로 chungData ec=3 청주시 각 구는 도지사 선거 기준 각 구의 집계이므로 합산 가능
       entries.forEach(([k, d]) => {
         totalVoters += d.voters;
         totalVotes  += d.votes;
         d.candidates.forEach(c => {
+          totalValidVotes += c.votes;
           totals[c.party] = (totals[c.party] || { votes: 0, name: c.name, partyName: c.partyName });
           totals[c.party].votes += c.votes;
         });
@@ -610,10 +615,10 @@ function buildSummaryBar() {
       const sorted = Object.entries(totals).sort((a,b) => b[1].votes - a[1].votes);
       const w = sorted[0]?.[1], r = sorted[1]?.[1];
       if (!w) { bar.innerHTML = ''; return; }
-      const wPct = (w.votes/totalVotes*100).toFixed(2);
-      const rPct = r ? (r.votes/totalVotes*100).toFixed(2) : '0';
+      const wPct = (w.votes/totalValidVotes*100).toFixed(2);
+      const rPct = r ? (r.votes/totalValidVotes*100).toFixed(2) : '0';
       const gap = w.votes - (r ? r.votes : 0);
-      const gapPct = (gap/totalVotes*100).toFixed(2);
+      const gapPct = (gap/totalValidVotes*100).toFixed(2);
       const wColor = partyColor(sorted[0][0]);
       const rColor = r ? partyColor(sorted[1][0]) : '#888';
       bar.innerHTML = `
