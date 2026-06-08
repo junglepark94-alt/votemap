@@ -256,7 +256,10 @@ function parseCouncilLabel(label) {
 }
 
 // GeoJSON name → city prefix (청주시상당구 → 청주시)
+// 2014 청원군→청주시 통합 반영
+const GEO_OLD_CITY = { '청원군': '청주시' };
 function extractCityFromGeoName(nm) {
+  if (GEO_OLD_CITY[nm]) return GEO_OLD_CITY[nm];
   for (const c of ['청주시','천안시','아산시','서산시','논산시','당진시','공주시','보령시','충주시','제천시']) {
     if (nm.startsWith(c) && nm.length > c.length) return c;
   }
@@ -389,7 +392,7 @@ function getDataForName(sigName) {
     // 없으면 이 이름이 시(市) 접두사인 경우 → 하위 구 데이터 합산 (e.g. 청주시 → 4구 합산)
     return aggregateByCity(currentRegion, 3, nm);
   } else if (currentEc === 4) {
-    return chungData[`${r}__4__${nm}`] || null;
+    return chungData[`${r}__4__${nm}`] || chungData[`${r}__4__${extractCityFromGeoName(nm)}`] || null;
   } else if (currentEc === 5 || currentEc === 6) {
     return getCouncilAggForGeo(currentRegion, currentEc, nm);
   }
@@ -519,7 +522,7 @@ function bindTooltip(layer, feature) {
 
 // 상세 패널
 function showDetailPanel(sigName) {
-  let displayName = sigName;
+  let displayName = (currentEc === 4) ? extractCityFromGeoName(normName(sigName)) : sigName;
   const d = getDataForName(sigName);
   if (!d) return;
 
@@ -951,8 +954,11 @@ function loadAndRender() {
       onEachFeature: (feature, layer) => {
         const raw = featureName(feature);
         const d = getDataForName(raw);
-        // displayName: ec=4 청주시상당구 → 청주시상당구 (그대로 표시, 데이터는 청주시)
-        sidebarNames.push({ sigName: raw, displayName: raw, d });
+        // ec=4: 청주시상당구 등 하위 구 → 청주시로 표시, 중복 제거
+        const cityDisplay = (currentEc === 4) ? extractCityFromGeoName(normName(raw)) : raw;
+        if (!sidebarNames.some(x => x.d === d && x.displayName === cityDisplay)) {
+          sidebarNames.push({ sigName: raw, displayName: cityDisplay, d });
+        }
         bindTooltip(layer, feature);
         layer.on({
           mouseover(e) { e.target.setStyle(getStyle(feature, true)); e.target.bringToFront(); },
@@ -1032,7 +1038,12 @@ document.querySelectorAll('.ec-tab').forEach(tab => {
       const names = [];
       geojsonLayer.eachLayer(layer => {
         const raw = featureName(layer.feature);
-        names.push({ sigName: raw, displayName: raw, d: getDataForName(raw) });
+        const d = getDataForName(raw);
+        // ec=4: 청주시상당구 등 하위 구 → 청주시로 표시, 중복 제거
+        const cityDisplay = (currentEc === 4) ? extractCityFromGeoName(normName(raw)) : raw;
+        if (!names.some(x => x.d === d && x.displayName === cityDisplay)) {
+          names.push({ sigName: raw, displayName: cityDisplay, d });
+        }
       });
       buildSidebar(names);
       buildSummaryBar();
