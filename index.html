@@ -185,8 +185,11 @@
   .plabel-marker {
     background: none !important;
     border: none !important;
+    overflow: visible !important;
   }
   .plabel-compact {
+    position: absolute;
+    left: 50%; top: 50%;
     transform: translate(-50%, -50%);
     background: rgba(15,17,23,0.97);
     border: 1px solid rgba(255,255,255,0.35);
@@ -1288,7 +1291,7 @@ function createPermanentLabels() {
   });
 
   // 2) 라벨을 폴리곤 바깥 빈 영역으로 배치
-  const LW = 180, LH = 32, PAD = 8;
+  const LW = 200, LH = 34, PAD = 8;
   const TW = LW + PAD, TH = LH + PAD;
   const mapSize = map.getSize();
   const bounds = geojsonLayer.getBounds();
