@@ -193,13 +193,13 @@
     transform: translate(-50%, -50%);
     background: rgba(15,17,23,0.97);
     border: 1px solid rgba(255,255,255,0.35);
-    color: #e0e0e0; font-size: 0.82rem;
-    padding: 6px 12px; border-radius: 8px;
+    color: #fff; font-size: 0.95rem; font-weight: 700;
+    padding: 7px 14px; border-radius: 8px;
     box-shadow: 0 3px 14px rgba(0,0,0,0.6);
     white-space: nowrap; pointer-events: none;
   }
-  .plabel-compact b { color: #fff; font-size: 0.86rem; }
-  .plabel-compact .pgap { color: #888; font-size: 0.7rem; }
+  .plabel-compact b { color: #fff; font-size: 1rem; font-weight: 800; }
+  .plabel-compact .pgap { color: #aaa; font-size: 0.82rem; font-weight: 600; }
 
   /* ── Mobile responsive ── */
   @media (max-width: 768px) {
@@ -1291,7 +1291,7 @@ function createPermanentLabels() {
   });
 
   // 2) 라벨을 폴리곤 바깥 빈 영역으로 배치
-  const LW = 200, LH = 34, PAD = 8;
+  const LW = 235, LH = 42, PAD = 8;
   const TW = LW + PAD, TH = LH + PAD;
   const mapSize = map.getSize();
   const bounds = geojsonLayer.getBounds();
