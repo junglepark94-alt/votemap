@@ -227,6 +227,14 @@
     .sidebar-toggle { display: flex; }
     .label-mode-btn { right: 62px; font-size: 0.68rem; height: 34px; padding: 0 10px; }
 
+    .plabel-compact {
+      font-size: 0.6rem; font-weight: 600;
+      padding: 3px 7px; border-radius: 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+    .plabel-compact b { font-size: 0.64rem; font-weight: 700; }
+    .plabel-compact .pgap { font-size: 0.54rem; }
+
     .main { position: relative; }
     .map-wrap { flex: 1; min-width: 0; }
 
@@ -1291,7 +1299,8 @@ function createPermanentLabels() {
   });
 
   // 2) 라벨을 폴리곤 바깥 빈 영역으로 배치
-  const LW = 235, LH = 42, PAD = 8;
+  const isMobile = window.innerWidth <= 768;
+  const LW = isMobile ? 170 : 235, LH = isMobile ? 24 : 42, PAD = isMobile ? 4 : 8;
   const TW = LW + PAD, TH = LH + PAD;
   const mapSize = map.getSize();
   const bounds = geojsonLayer.getBounds();
@@ -1302,7 +1311,7 @@ function createPermanentLabels() {
     const dx = it.cx - bcPx.x, dy = it.cy - bcPx.y;
     const angle = Math.atan2(dy, dx);
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const push = Math.max(dist * 1.8, 140);
+    const push = Math.max(dist * 1.8, isMobile ? 80 : 140);
     it.lx = bcPx.x + Math.cos(angle) * push;
     it.ly = bcPx.y + Math.sin(angle) * push;
   });
